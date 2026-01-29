@@ -1,0 +1,34 @@
+
+const fetch = require('node-fetch'); // Standard in Node 18+ usually, or use dynamic import
+
+async function main() {
+    // We need a token. I'll try to login first or just assume I can hit it if I disable auth for a sec? 
+    // No, I should use the token logic or just mock it.
+    // Easier: Just use the prisma client to emulate the query EXACTLY as the route does, 
+    // BUT checking the running server is better to catch middleware issues.
+    // Let's rely on the prisma debug script again but make sure it matches the route EXACTLY.
+    // I already did `debug_metrics_deep.js` and it worked (Total Tasks: 6).
+    
+    // Wait, `debug_metrics_deep.js` output:
+    // Efficiency: [ { avg_duration_minutes: 30, total_tasks: 6n } ]
+    // This confirms the DB query works.
+    
+    // So why does the route return 0?
+    // Maybe `startDate` and `endDate` params are being sent by frontend and they are wrong?
+    // Or the route default logic is failing.
+    
+    // Let's debug the frontend to see what it sends.
+    // I can't easily debug frontend console.
+    
+    // I will assume the route might be using `req.query` params that filter out data.
+    // Frontend `MaintenanceAnalytics.jsx` uses `startDate` and `endDate`.
+    // Default startDate is `subDays(new Date(), 30)`.
+    
+    // Let's checking `server/src/index.js` logic for efficiency again.
+    // It uses `parseInt(days)` from query, or startDate/endDate.
+    
+    // I'll update the server to log the exact query it runs.
+}
+
+// Actually, I'll modify the server to add console.log in the efficiency endpoint.
+// This is the most reliable way to see what's happening.
