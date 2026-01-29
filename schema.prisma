@@ -1,0 +1,148 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              Int            @id @default(autoincrement())
+  username        String         @unique
+  password        String
+  hashed_password String?
+  role            String?        @default("user")
+  email           String?
+  is_active       Boolean        @default(true)
+  last_login      DateTime?
+  created_at      DateTime       @default(now())
+
+  auditLogs       AuditLog[]
+  createdPOs      PurchaseOrder[]
+  stockMovements  StockMovement[]
+  sessions        UserSession[]
+
+  @@map("users")
+}
+
+model AuditLog {
+  id          Int      @id @default(autoincrement())
+  user_id     Int?
+  action      String?
+  table_name  String?
+  record_id   Int?
+  changes     String?
+  ip_address  String?
+  timestamp   DateTime @default(now())
+
+  user        User?    @relation(fields: [user_id], references: [id])
+
+  @@map("audit_log")
+}
+
+model Inventory {
+  id                Int       @id @default(autoincrement())
+  product_name      String    @unique
+  nav_number        String?
+  qty               Int
+  location_area     String?
+  location          String?
+  sub_location      String?
+  min_qty           Int       @default(10)
+  reorder_point     Int       @default(10)
+  reorder_qty       Int       @default(20)
+  supplier_name     String?
+  supplier_email    String?
+  unit_cost         Float?
+  last_ordered_date DateTime?
+
+  poItems           POItem[]
+  stockMovements    StockMovement[]
+  logs              Log[]
+
+  @@map("inventory")
+}
+
+model PurchaseOrder {
+  id                Int       @id @default(autoincrement())
+  po_number         String    @unique
+  supplier_name     String?
+  status            String?   @default("Draft")
+  order_date        DateTime  @default(now())
+  expected_delivery DateTime?
+  total_cost        Float?
+  notes             String?
+  created_by        Int?
+
+  creator           User?     @relation(fields: [created_by], references: [id])
+  items             POItem[]
+
+  @@map("purchase_orders")
+}
+
+model POItem {
+  id         Int     @id @default(autoincrement())
+  po_id      Int?
+  product_id Int?
+  quantity   Int?
+  unit_cost  Float?
+
+  purchaseOrder PurchaseOrder? @relation(fields: [po_id], references: [id])
+  product       Inventory?     @relation(fields: [product_id], references: [id])
+
+  @@map("po_items")
+}
+
+model StockMovement {
+  id             Int      @id @default(autoincrement())
+  product_id     Int?
+  movement_type  String?
+  quantity       Int?
+  reference_type String?
+  reference_id   Int?
+  performed_by   Int?
+  timestamp      DateTime @default(now())
+  notes          String?
+
+  product        Inventory? @relation(fields: [product_id], references: [id])
+  user           User?      @relation(fields: [performed_by], references: [id])
+
+  @@map("stock_movements")
+}
+
+model Log {
+  id              Int      @id @default(autoincrement())
+  timestamp       DateTime @default(now())
+  engineer        String?
+  date_of_work    DateTime?
+  area            String?
+  system          String?
+  component       String?
+  spare_part_used String?
+  action          String?
+  product_id      Int?
+  qty_used        Int?
+  duration        Int?
+  work_status     String?
+  remarks         String?
+  
+  product         Inventory? @relation(fields: [product_id], references: [id])
+
+  @@map("logs")
+}
+
+model UserSession {
+    id              Int      @id @default(autoincrement())
+    user_id         Int?
+    token_id        String?
+    login_time      DateTime @default(now())
+    logout_time     DateTime?
+    duration_minutes Int?    @default(0)
+    ip_address      String?
+    user_agent      String?
+    
+    user            User?    @relation(fields: [user_id], references: [id])
+    
+    @@map("user_sessions")
+}
